@@ -4,7 +4,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [principal]
+    branches: [main]
 
 jobs:
   build:
@@ -26,9 +26,9 @@ jobs:
       - name: Instalar ferramentas Android
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-      - name: Instalar Godot 4.3
+      - name: Instalar Godot
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
           unzip -q Godot_v4.3-stable_linux.x86_64.zip
@@ -39,10 +39,10 @@ jobs:
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
-          unzip -q Godot_v4.3-stable_export_templates.tpz -d /tmp/godot-templates
-          cp -r /tmp/godot-templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
+          unzip -q Godot_v4.3-stable_export_templates.tpz -d /tmp/templates
+          cp -r /tmp/templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
 
-      - name: Configurar caminhos do Android
+      - name: Configurar SDK e Java
         run: |
           mkdir -p ~/.config/godot
           cat > ~/.config/godot/editor_settings-4.tres <<EOF
@@ -53,19 +53,19 @@ jobs:
           EOF
 
       - name: Extrair jogo
-        run: unzip -o block_survival_github_ready.zip
+        run: unzip -o block_survival_github_ready.zip -x '.github/*'
 
       - name: Preparar projeto
-        run: godot --headless --editor --path block_survival --quit
+        run: godot --headless --editor --path . --quit
 
       - name: Gerar APK
         run: |
-          mkdir -p block_survival/build
-          godot --headless --path block_survival --export-debug "Android" block_survival/build/BlockSurvival.apk
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/BlockSurvival.apk
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
           name: BlockSurvival-APK
-          path: block_survival/build/BlockSurvival.apk
+          path: build/BlockSurvival.apk
           if-no-files-found: error
